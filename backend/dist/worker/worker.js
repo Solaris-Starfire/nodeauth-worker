@@ -572,6 +572,52 @@ var init_crypto = __esm({
   }
 });
 
+// src/shared/utils/request.ts
+var request_exports = {};
+__export(request_exports, {
+  getClientIp: () => getClientIp,
+  getRealRequestUrl: () => getRealRequestUrl
+});
+var getRealRequestUrl, getClientIp;
+var init_request = __esm({
+  "src/shared/utils/request.ts"() {
+    "use strict";
+    getRealRequestUrl = (c2) => {
+      const edgeOneHost = c2.req.header("eo-pages-host");
+      const forwardedHost = c2.req.header("x-forwarded-host");
+      const hostHeader = c2.req.header("host");
+      const requestUrl = new URL(c2.req.url);
+      const forwardedProto = c2.req.header("x-forwarded-proto");
+      if (edgeOneHost) {
+        requestUrl.hostname = edgeOneHost.split(",")[0].trim();
+      } else if (forwardedHost) {
+        requestUrl.hostname = forwardedHost.split(",")[0].trim();
+      } else if (hostHeader) {
+        requestUrl.hostname = hostHeader.split(",")[0].trim();
+      }
+      if (forwardedProto) {
+        requestUrl.protocol = forwardedProto.split(",")[0].trim() + ":";
+      } else if (requestUrl.hostname !== "localhost" && requestUrl.hostname !== "127.0.0.1") {
+        requestUrl.protocol = "https:";
+      }
+      return requestUrl.toString();
+    };
+    getClientIp = (c2) => {
+      const cfIp = c2.req.header("CF-Connecting-IP");
+      const eoIp = c2.req.header("eo-connecting-ip");
+      const xRealIp = c2.req.header("x-real-ip");
+      const forwardedFor = c2.req.header("x-forwarded-for");
+      if (cfIp) return cfIp;
+      if (eoIp) return eoIp;
+      if (xRealIp) return xRealIp;
+      if (forwardedFor) {
+        return forwardedFor.split(",")[0].trim();
+      }
+      return "unknown";
+    };
+  }
+});
+
 // node_modules/pvtsutils/build/index.js
 var require_build = __commonJS({
   "node_modules/pvtsutils/build/index.js"(exports2) {
@@ -5868,7 +5914,7 @@ ${prettyStateOverride(stateOverride)}`;
 
 // node_modules/viem/_esm/errors/request.js
 var HttpRequestError, RpcRequestError, TimeoutError;
-var init_request = __esm({
+var init_request2 = __esm({
   "node_modules/viem/_esm/errors/request.js"() {
     init_stringify();
     init_base();
@@ -5970,7 +6016,7 @@ var unknownErrorCode, RpcError, ProviderRpcError, ParseRpcError, InvalidRequestR
 var init_rpc = __esm({
   "node_modules/viem/_esm/errors/rpc.js"() {
     init_base();
-    init_request();
+    init_request2();
     unknownErrorCode = -1;
     RpcError = class extends BaseError2 {
       constructor(cause, { code, docsPath: docsPath8, metaMessages, name, shortMessage }) {
@@ -11099,7 +11145,7 @@ var init_ccip2 = __esm({
   "node_modules/viem/_esm/utils/ccip.js"() {
     init_call();
     init_ccip();
-    init_request();
+    init_request2();
     init_utils3();
     init_decodeErrorResult();
     init_encodeAbiParameters();
@@ -11404,38 +11450,6 @@ var init_call = __esm({
     init_assertRequest();
     requestOptionsId = 0;
     requestOptionsIds = /* @__PURE__ */ new WeakMap();
-  }
-});
-
-// src/shared/utils/request.ts
-var request_exports = {};
-__export(request_exports, {
-  getRealRequestUrl: () => getRealRequestUrl
-});
-var getRealRequestUrl;
-var init_request2 = __esm({
-  "src/shared/utils/request.ts"() {
-    "use strict";
-    getRealRequestUrl = (c2) => {
-      const edgeOneHost = c2.req.header("eo-pages-host");
-      const forwardedHost = c2.req.header("x-forwarded-host");
-      const hostHeader = c2.req.header("host");
-      const requestUrl = new URL(c2.req.url);
-      const forwardedProto = c2.req.header("x-forwarded-proto");
-      if (edgeOneHost) {
-        requestUrl.hostname = edgeOneHost.split(",")[0].trim();
-      } else if (forwardedHost) {
-        requestUrl.hostname = forwardedHost.split(",")[0].trim();
-      } else if (hostHeader) {
-        requestUrl.hostname = hostHeader.split(",")[0].trim();
-      }
-      if (forwardedProto) {
-        requestUrl.protocol = forwardedProto.split(",")[0].trim() + ":";
-      } else if (requestUrl.hostname !== "localhost" && requestUrl.hostname !== "127.0.0.1") {
-        requestUrl.protocol = "https:";
-      }
-      return requestUrl.toString();
-    };
   }
 });
 
@@ -23088,6 +23102,7 @@ async function authMiddleware(c2, next) {
 // src/shared/middleware/rateLimitMiddleware.ts
 init_config();
 init_logger();
+init_request();
 var rateLimit = (options) => {
   return async (c2, next) => {
     const db = c2.env.DB;
@@ -23095,7 +23110,7 @@ var rateLimit = (options) => {
       await next();
       return;
     }
-    const clientIp = c2.req.header("CF-Connecting-IP") || "unknown";
+    const clientIp = getClientIp(c2);
     const path = c2.req.path;
     const key = options.keyBuilder ? options.keyBuilder(c2) : `rl:${clientIp}:${path}`;
     const now = Date.now();
@@ -39210,7 +39225,7 @@ init_encodeFunctionData();
 init_abi();
 init_base();
 init_contract();
-init_request();
+init_request2();
 init_rpc();
 var EXECUTION_REVERTED_ERROR_CODE = 3;
 function getContractError(err, { abi: abi2, address, args, docsPath: docsPath8, functionName, sender }) {
@@ -42214,7 +42229,7 @@ async function verifyAuthorization({ address, authorization, signature }) {
 
 // node_modules/viem/_esm/utils/buildRequest.js
 init_base();
-init_request();
+init_request2();
 init_rpc();
 init_utils3();
 
@@ -42441,7 +42456,7 @@ function defineChain(chain) {
 init_fromHex();
 
 // node_modules/viem/_esm/utils/rpc/http.js
-init_request();
+init_request2();
 init_utils3();
 
 // node_modules/viem/_esm/utils/promise/withTimeout.js
@@ -46477,7 +46492,7 @@ function createTransport({ key, methods, name, request, retryCount = 3, retryDel
 }
 
 // node_modules/viem/_esm/clients/transports/http.js
-init_request();
+init_request2();
 
 // node_modules/viem/_esm/errors/transport.js
 init_base();
@@ -46709,7 +46724,7 @@ var Web3WalletAuthService = class {
 
 // src/features/auth/authRoutes.ts
 init_logger();
-init_request2();
+init_request();
 var auth = new Hono2();
 var isSecureContext = (c2) => c2.env.ENVIRONMENT !== "development";
 var getService = (c2) => new AuthService(c2.env);
@@ -46780,7 +46795,7 @@ auth.post("/callback/:provider", rateLimit({
   }
   deleteCookie(c2, stateCookieName, { path: "/", secure: isSecureContext(c2), sameSite: "Lax" });
   const service = getService(c2);
-  const clientIp = c2.req.header("CF-Connecting-IP") || "unknown";
+  const clientIp = getClientIp(c2);
   const userAgent = c2.req.header("User-Agent") || "Unknown Device";
   const { token, userInfo, deviceKey, needsEmergency, encryptionKey, license } = await service.handleOAuthCallback(providerName, body, clientIp, userAgent, body.deviceId);
   setCookie(c2, "auth_token", token, {
@@ -46900,7 +46915,7 @@ auth.post("/webauthn/login/verify", rateLimit({
   const body = await c2.req.json();
   const expectedChallenge = getCookie(c2, "webauthn_login_challenge");
   if (!expectedChallenge) throw new AppError("webauthn_challenge_missing", 400);
-  const clientIp = c2.req.header("CF-Connecting-IP") || "unknown";
+  const clientIp = getClientIp(c2);
   const userAgent = c2.req.header("User-Agent") || "Unknown Device";
   const service = getWebAuthnService(c2);
   const result = await service.verifyAuthenticationResponse(body, expectedChallenge, clientIp, userAgent, body.deviceId);
@@ -46979,7 +46994,7 @@ auth.post("/web3/login/verify", rateLimit({
   const body = await c2.req.json();
   const expectedNonce = getCookie(c2, "web3_login_nonce");
   if (!expectedNonce) throw new AppError("web3_nonce_missing", 400);
-  const clientIp = c2.req.header("CF-Connecting-IP") || "unknown";
+  const clientIp = getClientIp(c2);
   const userAgent = c2.req.header("User-Agent") || "Unknown Device";
   const service = getWeb3WalletAuthService(c2);
   const result = await service.verifyAuthenticationResponse(
@@ -47026,7 +47041,7 @@ auth.get("/sessions", authMiddleware, async (c2) => {
   const user = c2.get("user");
   const currentSessionId = c2.get("sessionId");
   const service = getSessionService(c2);
-  const clientIp = c2.req.header("CF-Connecting-IP") || "unknown";
+  const clientIp = getClientIp(c2);
   if (currentSessionId) {
     c2.executionCtx?.waitUntil?.(service.heartbeat(currentSessionId, clientIp));
   }
@@ -47062,7 +47077,7 @@ auth.post("/extension-session", authMiddleware, rateLimit({
 }), async (c2) => {
   const user = c2.get("user");
   const body = await c2.req.json();
-  const clientIp = c2.req.header("CF-Connecting-IP") || "unknown";
+  const clientIp = getClientIp(c2);
   let deviceId = body?.deviceId;
   if (typeof deviceId === "string" && deviceId.length > 64) {
     deviceId = deviceId.substring(0, 64);
@@ -58757,7 +58772,7 @@ health.get("/health-check", async (c2) => {
   c2.header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   c2.header("Pragma", "no-cache");
   c2.header("Expires", "0");
-  const { getRealRequestUrl: getRealRequestUrl2 } = await Promise.resolve().then(() => (init_request2(), request_exports));
+  const { getRealRequestUrl: getRealRequestUrl2 } = await Promise.resolve().then(() => (init_request(), request_exports));
   const result = await runHealthCheck(c2.env, getRealRequestUrl2(c2));
   return c2.json({
     success: true,
@@ -58768,6 +58783,7 @@ var healthRoutes_default = health;
 
 // src/features/emergency/emergencyRoutes.ts
 init_config();
+init_request();
 var emergency = new Hono2();
 emergency.post("/confirm", authMiddleware, rateLimit({
   windowMs: SECURITY_CONFIG.LOCKOUT_TIME,
@@ -58780,7 +58796,7 @@ emergency.post("/confirm", authMiddleware, rateLimit({
   }
   const repository = new EmergencyRepository(c2.env.DB);
   await repository.confirmEmergency();
-  const clientIp = c2.req.header("CF-Connecting-IP") || "unknown";
+  const clientIp = getClientIp(c2);
   await resetRateLimit(c2, `rl:${clientIp}:/api/emergency/confirm`);
   return c2.json({
     success: true,
@@ -58798,10 +58814,20 @@ var proxyRequest = async (targetHost, targetPath, c2) => {
   url.pathname = targetPath;
   url.port = "";
   url.protocol = "https:";
-  const headers = new Headers(c2.req.raw.headers);
+  const headers = new Headers();
+  if (c2.req.raw && c2.req.raw.headers) {
+    c2.req.raw.headers.forEach((value, key) => {
+      const lowerKey = key.toLowerCase();
+      if (lowerKey.startsWith("x-scf-") || lowerKey.startsWith("eo-") || lowerKey.startsWith("x-cube-") || lowerKey.startsWith("cf-")) {
+        return;
+      }
+      if (["x-forwarded-for", "x-real-ip", "host"].includes(lowerKey)) {
+        return;
+      }
+      headers.set(key, value);
+    });
+  }
   headers.set("Host", targetHost);
-  headers.delete("cf-connecting-ip");
-  headers.delete("x-forwarded-for");
   try {
     const res = await fetch(url.toString(), {
       method: c2.req.method,
@@ -58879,7 +58905,7 @@ app.use("/api/*", async (c2, next) => {
     await next();
     return;
   }
-  const { getRealRequestUrl: getRealRequestUrl2 } = await Promise.resolve().then(() => (init_request2(), request_exports));
+  const { getRealRequestUrl: getRealRequestUrl2 } = await Promise.resolve().then(() => (init_request(), request_exports));
   const securityResult = await runHealthCheck(c2.env, getRealRequestUrl2(c2));
   if (securityResult.status === "fail") {
     return c2.json({
